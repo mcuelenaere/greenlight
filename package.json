@@ -1,0 +1,21 @@
+{
+  "author": "Maurus Cuelenaere <mcuelenaere@gmail.com>",
+  "license": "MIT",
+  "name": "greenlight",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mcuelenaere/greenlight.git"
+  },
+  "dependencies": {
+    "bluelight": "*",
+    "bufferutil": "^1.2.1",
+    "express": "^4.13.3",
+    "express-ws": "^1.0.0-rc.2",
+    "utf-8-validate": "^1.2.1"
+  },
+  "engines": {
+    "node": ">=5.4.0"
+  },
+  "devDependencies": {},
+  "main": "./app.js"
+}
