@@ -34,6 +34,15 @@ curl http://localhost:8000/api/events
 
 This returns a [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) stream.
 
+Example usage:
+
+```javascript
+var source = new EventSource("http://localhost:8000/api/events");
+source.addEventListener('deviceDiscovered', function (e) {
+    console.log(JSON.parse(e.data));
+});
+```
+
 ##### Get list of devices
 
 ```sh
