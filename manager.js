@@ -73,9 +73,11 @@ class Manager {
                 this.emit('lightEnabled', {
                     'deviceId': device.uniqueId
                 });
-                break;
+                return true;
             }
         }
+
+        return false;
     }
 
     disableLight(deviceId) {
@@ -86,9 +88,11 @@ class Manager {
                 this.emit('lightDisabled', {
                     'deviceId': device.uniqueId
                 });
-                break;
+                return true;
             }
         }
+
+        return false;
     }
 
     setColor(deviceId, color) {
@@ -102,9 +106,11 @@ class Manager {
                     'deviceId': device.uniqueId,
                     'color': color
                 });
-                break;
+                return true;
             }
         }
+
+        return false;
     }
 
     renameDevice(deviceId, newName) {
@@ -115,9 +121,11 @@ class Manager {
                     'deviceId': device.uniqueId,
                     'name': newName
                 });
-                break;
+                return true;
             }
         }
+
+        return false;
     }
 
     _getDeviceData(device) {
@@ -146,6 +154,16 @@ class Manager {
             'enabled': enabled,
             'color': color,
         };
+    }
+
+    getDevice(deviceId) {
+        for (let device of this._bluelight.detectedDevices) {
+            if (device.uniqueId === deviceId) {
+                return this._getDeviceData(device);
+            }
+        }
+
+        return null;
     }
 
     getDevices() {
