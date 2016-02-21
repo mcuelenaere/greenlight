@@ -112,17 +112,18 @@
         $scope.enableLight = function (device) {
             Api.enableLight(device);
         };
-        $scope.$watch('lightColor', function (newValue, oldValue) {
-            if (!newValue) {
+        $scope.$watchGroup(['lightColor', 'lightOpacity'], function (newValues, oldValues) {
+            if (!newValues[0] || !newValues[1]) {
                 return;
             }
 
-            var color = parseColor(newValue);
+            var color = parseColor(newValues[0]);
+            var opacity = parseInt(newValues[1]) / 100;
             Api.setColor($scope.selectedDevice, {
                 'red': color[0] / 255,
                 'green': color[1] / 255,
                 'blue': color[2] / 255,
-                'opacity': 1.0
+                'opacity': opacity
             });
         });
 

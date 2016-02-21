@@ -23,6 +23,7 @@
         </div>
 
         <input type="color" ng-model="lightColor" />
+        <input type="range" min=0 max=100 step=1 ng-model="lightOpacity" />
         <button ng-click="disableLight(selectedDevice)">Disable Light</button>
         <button ng-click="enableLight(selectedDevice)">Enable Light</button>
     </body>
