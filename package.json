@@ -7,7 +7,7 @@
     "url": "https://github.com/mcuelenaere/greenlight.git"
   },
   "dependencies": {
-    "bluelight": "*",
+    "bluelight": "^0.1.0",
     "bufferutil": "^1.2.1",
     "express": "^4.13.3",
     "express-ws": "^1.0.0-rc.2",
