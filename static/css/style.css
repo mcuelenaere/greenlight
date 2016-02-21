@@ -1,0 +1,9 @@
+.btn:focus {
+  /* remove ugly focus border */
+  outline: none !important;
+}
+
+.color-picker {
+  width: 150px;
+  height: 150px;
+}
