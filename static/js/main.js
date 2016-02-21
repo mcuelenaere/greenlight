@@ -59,6 +59,9 @@
             },
             getDeviceList: function () {
                 send({'type': 'getDevices'});
+            },
+            renameDevice: function (deviceId, newName) {
+                send({'type': 'renameDevice', 'deviceId': deviceId, 'newName': newName});
             }
         };
     });
@@ -74,58 +77,110 @@
         }
     }
 
+    function dec2hex(d) {
+        var hex = Number(d).toString(16);
+        var padding = 2;
+
+        while (hex.length < padding) {
+            hex = "0" + hex;
+        }
+
+        return hex;
+    }
+
+    function formatColor(color) {
+        return '#' + dec2hex(color.red * 255) + dec2hex(color.green * 255) + dec2hex(color.blue * 255);
+    }
+
     app.controller('HomeView', ['$scope', 'Api', function ($scope, Api) {
-        $scope.devices = [];
+        $scope.isScanning = false;
+        $scope.devices = {};
 
         Api.on($scope, 'deviceDiscovered', function (msg) {
-            $scope.devices.push({
+            $scope.devices[msg.deviceId] = {
                 'id': msg.deviceId,
-                'name': msg.deviceName
-            })
+                'name': msg.deviceName,
+                'color': formatColor(msg.color),
+                'opacity': msg.color.opacity,
+                'enabled': msg.enabled
+            };
         });
 
         Api.on($scope, 'deviceLost', function (msg) {
-            for (var i = 0; i < $scope.devices.length; i++) {
-                if ($scope.devices[i].id === msg.deviceId) {
-                    $scope.devices.splice(i, 1);
-                    break;
-                }
+            delete $scope.devices[msg.deviceId];
+        });
+
+        Api.on($scope, 'deviceRenamed', function (msg) {
+            if (msg.deviceId in $scope.devices) {
+                $scope.devices[msg.deviceId].name = msg.name;
+            }
+        });
+
+        Api.on($scope, 'lightDisabled', function (msg) {
+            if (msg.deviceId in $scope.devices) {
+                $scope.devices[msg.deviceId].enabled = false;
+            }
+        });
+
+        Api.on($scope, 'lightEnabled', function (msg) {
+            if (msg.deviceId in $scope.devices) {
+                $scope.devices[msg.deviceId].enabled = true;
             }
         });
 
         Api.on($scope, 'listOfDevices', function (msg) {
-            $scope.devices = [];
+            $scope.devices = {};
             msg.devices.forEach(function (device) {
-                $scope.devices.push({
+                $scope.devices[device.deviceId] = {
                     'id': device.deviceId,
-                    'name': device.deviceName
-                });
+                    'name': device.deviceName,
+                    'color': formatColor(device.color),
+                    'opacity': device.color.opacity,
+                    'enabled': device.enabled
+                };
             });
+            console.log($scope.devices);
+        });
+
+        Api.on($scope, 'scanStarted', function () {
+            $scope.isScanning = true;
+        });
+
+        Api.on($scope, 'scanStopped', function () {
+            $scope.isScanning = false;
         });
 
         $scope.scanForDevices = function () {
             Api.scanForDevices();
         };
-        $scope.disableLight = function (device) {
-            Api.disableLight(device);
-        };
-        $scope.enableLight = function (device) {
-            Api.enableLight(device);
-        };
-        $scope.$watchGroup(['lightColor', 'lightOpacity'], function (newValues, oldValues) {
-            if (!newValues[0] || !newValues[1]) {
-                return;
-            }
 
-            var color = parseColor(newValues[0]);
-            var opacity = parseInt(newValues[1]) / 100;
+        $scope.renameDevice = function (deviceId) {
+            var currentName = $scope.devices[deviceId].name;
+            var newName = prompt('What name do you want to give to this device?', currentName);
+            if (newName && newName != currentName) {
+                Api.renameDevice(deviceId, newName);
+            }
+        };
+
+        $scope.changeColor = function (deviceId) {
+            var color = parseColor($scope.devices[deviceId].color);
+            var opacity = parseFloat($scope.devices[deviceId].opacity);
             Api.setColor($scope.selectedDevice, {
                 'red': color[0] / 255,
                 'green': color[1] / 255,
                 'blue': color[2] / 255,
                 'opacity': opacity
             });
-        });
+        };
+
+        $scope.toggleLight = function (deviceId) {
+            var isEnabled = $scope.devices[deviceId].enabled;
+            if (isEnabled) {
+                Api.disableLight(deviceId);
+            } else {
+                Api.enableLight(deviceId);
+            }
+        };
 
         // get list of devices to bootstrap ourselves
         Api.getDeviceList();

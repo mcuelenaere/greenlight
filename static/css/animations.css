@@ -1,0 +1,18 @@
+@keyframes rotate {
+  from {
+    transform-origin: center;
+    transform: none;
+  }
+
+  to {
+    transform-origin: center;
+    transform: rotateZ(180deg);
+  }
+}
+
+.animate-rotate-infinitely {
+  animation-name: rotate;
+  animation-iteration-count: infinite;
+  animation-duration: .7s;
+  animation-timing-function: linear;
+}

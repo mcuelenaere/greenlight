@@ -1,12 +1,12 @@
 'use strict';
 
 const
-    Bluelight = require('bluelight'),
+    Manager = require('./manager'),
     express = require('express'),
     expressWs = require('express-ws');
 
 let app = express(),
-    bluelight = new Bluelight(),
+    manager = new Manager(),
     ws = expressWs(app).getWss();
 
 function broadcast(data) {
@@ -16,50 +16,20 @@ function broadcast(data) {
     }
 }
 
-function validateColor(color) {
-    if (typeof color !== 'object') {
-        throw 'Color is not an object';
-    }
-    for (let key of ['red', 'green', 'blue', 'opacity']) {
-        if (!(key in color)) {
-            throw 'Color is missing property "' + key + '"';
-        }
-
-        if (typeof color[key] !== 'number') {
-            throw 'Color.' + key + ' is not a number';
-        }
-
-        if (color[key] < 0.0 || color[key] > 1.0) {
-            throw 'Color.' + key + ' is not between 0.0 and 1.0';
-        }
-    }
-}
-
-bluelight.on('error', (err) => {
+manager.on('error', (err) => {
     console.error(err);
-});
+})
 
-bluelight.on('discover', (device) => {
-    broadcast({
-        'type': 'deviceDiscovered',
-        'deviceId': device.uniqueId,
-        'deviceName': device.friendlyName
-    });
-});
-
-bluelight.on('disconnect', (device) => {
-    broadcast({
-        'type': 'deviceLost',
-        'deviceId': device.uniqueId,
-        'deviceName': device.friendlyName
-    });
-});
-
-bluelight.on('scanStop', () => {
-    broadcast({
-        'type': 'scanStopped'
-    });
-});
+// forward events
+for (let eventName of ['deviceDiscovered', 'deviceLost', 'scanStarted', 'scanStopped', 'lightEnabled', 'lightDisabled', 'colorSet', 'deviceRenamed']) {
+    (function (eventName) {
+        manager.on(eventName, (properties) => {
+            properties = properties || {};
+            properties.type = eventName;
+            broadcast(properties);
+        });
+    })(eventName);
+}
 
 // bind middlewares
 app.use(express.static('static'));
@@ -97,71 +67,32 @@ app.ws('/api/', (ws, req) => {
 
         switch (data.type) {
             case 'startScanning':
-                bluelight.scanFor(5000);
-                broadcast({
-                    'type': 'scanStarted'
-                });
+                manager.startScanning();
                 break;
             case 'enableLight':
-                for (let device of bluelight.detectedDevices) {
-                    if (device.uniqueId === data.deviceId) {
-                        device.enableLight();
-                        broadcast({
-                            'type': 'lightEnabled',
-                            'deviceId': device.uniqueId
-                        });
-                        break;
-                    }
-                }
+                manager.enableLight(data.deviceId);
                 break;
             case 'disableLight':
-                for (let device of bluelight.detectedDevices) {
-                    if (device.uniqueId === data.deviceId) {
-                        device.disableLight();
-                        broadcast({
-                            'type': 'lightDisabled',
-                            'deviceId': device.uniqueId
-                        });
-                        break;
-                    }
-                }
+                manager.disableLight(data.deviceId);
                 break;
             case 'setColor':
                 try {
-                    validateColor(data.color);
+                    manager.setColor(data.deviceId, data.color);
                 } catch (err) {
                     send({
                         'type': 'error',
-                        'message': 'Invalid color sent: ' + err
+                        'message': err
                     });
-                    break;
-                }
-
-                let color = data.color;
-                for (let device of bluelight.detectedDevices) {
-                    if (device.uniqueId === data.deviceId) {
-                        device.setColor(color.red, color.green, color.blue, color.opacity);
-                        broadcast({
-                            'type': 'colorSet',
-                            'deviceId': device.uniqueId,
-                            'color': color
-                        });
-                        break;
-                    }
                 }
                 break;
             case 'getDevices':
-                let devices = [];
-                for (let device of bluelight.detectedDevices) {
-                    devices.push({
-                        'deviceId': device.uniqueId,
-                        'deviceName': device.friendlyName
-                    });
-                }
                 send({
                     'type': 'listOfDevices',
-                    'devices': devices
+                    'devices': manager.getDevices()
                 });
+                break;
+            case 'renameDevice':
+                manager.renameDevice(data.deviceId, data.newName);
                 break;
             default:
                 send({

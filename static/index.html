@@ -12,21 +12,41 @@
         <link rel="stylesheet" href="/css/bootstrap.min.css">
         <link rel="stylesheet" href="/css/animations.css">
     </head>
-    <body ng-controller="HomeView">
+    <body>
         <!--[if lt IE 8]>
             <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
 
-        <div>
-            <button ng-click="scanForDevices()">Scan</button>
-            <select ng-model="selectedDevice">
-                <option ng-repeat="device in devices" value="{{ device.id }}">{{ device.name }}</option>
-            </select> 
+        <div class="container" ng-controller="HomeView">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="row">
+                        <button class="btn btn-primary" ng-click="scanForDevices()">Scan</button>
+                        <span class="glyphicon glyphicon-refresh animate-rotate-infinitely" ng-show="isScanning"></span>
+                    </div>
+                    <div class="row">
+                        <select ng-model="selectedDevice" size=5 class="form-control" ng-dblclick="renameDevice(selectedDevice)">
+                            <option ng-repeat="device in devices" value="{{ device.id }}">{{ device.name }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <input type="color" class="form-control" ng-disabled="!selectedDevice" ng-model="devices[selectedDevice].color" ng-change="changeColor(selectedDevice)" />
+                        </div>
+                        <div class="col-md-4">
+                            <input type="range" class="form-control" min=0 max=1 step="0.1" ng-disabled="!selectedDevice" ng-model="devices[selectedDevice].opacity" ng-change="changeColor(selectedDevice)" />
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-default" ng-class="{active: devices[selectedDevice].enabled}" ng-disabled="!selectedDevice" ng-click="toggleLight(selectedDevice)">
+                                <span class="glyphicon glyphicon-off"></span>
+                                Toggle Light
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <input type="color" ng-model="lightColor" />
-        <input type="range" min=0 max=100 step=1 ng-model="lightOpacity" />
-        <button ng-click="disableLight(selectedDevice)">Disable Light</button>
-        <button ng-click="enableLight(selectedDevice)">Enable Light</button>
     </body>
 </html>
